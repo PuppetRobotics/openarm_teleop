@@ -75,27 +75,15 @@ target_link_libraries(openarm_teleop_lib PUBLIC
 add_executable(gravity_comp control/gravity_compasation_main.cpp)
 add_executable(comm_test control/openarm_communication_test.cpp)
 add_executable(unilateral_control control/openarm_unilateral_control.cpp)
-add_executable(gravity_comp_ros control/gravity_compensation_rosnode.cpp)
-add_executable(unilateral_ros control/unilateral_control_ros.cpp)
 
 target_link_libraries(gravity_comp openarm_teleop_lib)
 target_link_libraries(comm_test openarm_teleop_lib)
 target_link_libraries(unilateral_control openarm_teleop_lib)
-target_link_libraries(gravity_comp_ros
-    openarm_teleop_lib
-    rclcpp::rclcpp
-    sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
-)
-target_link_libraries(unilateral_ros 
-    openarm_teleop_lib
-    rclcpp::rclcpp
-    sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
-)
+
 
 target_include_directories(gravity_comp PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_include_directories(unilateral_control PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_include_directories(gravity_comp_ros PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_include_directories(unilateral_ros PRIVATE ${EIGEN3_INCLUDE_DIRS})
+
 
 # -----------------------------
 # CMake Package
