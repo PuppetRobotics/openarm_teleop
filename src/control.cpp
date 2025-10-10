@@ -405,12 +405,10 @@ bool Control::DoControl()
                 robot_state_->hand_state().set_all_responses(joint_gripper_states);
 
 
-                // std::cerr << "joint_arm_states.size(): " << joint_arm_states.size() << std::endl;
-                // std::cerr << "joint_gripper_states.size(): " << joint_gripper_states.size() << std::endl;
-                // std::cerr << "robot_state_->get_total_joint_count(): " << robot_state_->get_total_joint_count() << std::endl;
 
                 size_t arm_dof = robot_state_->arm_state().get_size();
                 size_t gripper_dof = robot_state_->hand_state().get_size();
+
 
                 std::vector<double> joint_arm_positions(arm_dof, 0.0);
                 std::vector<double> joint_arm_velocities(arm_dof, 0.0);
@@ -427,6 +425,7 @@ bool Control::DoControl()
                         joint_gripper_velocities[i] = joint_gripper_states[i].velocity;
                 }
 
+
                 std::vector<double> gravity(arm_dof, 0.0);
                 std::vector<double> colioli(arm_dof, 0.0);
                 std::vector<double> inertia_diag(arm_dof, 0.0);
@@ -442,6 +441,8 @@ bool Control::DoControl()
                         dynamics_l_->GetGravity(joint_arm_positions.data(), gravity.data());
                         dynamics_l_->GetColiori(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
                         dynamics_l_->GetMassMatrixDiagonal(joint_arm_positions.data(), inertia_diag.data());
+
+
 
                         for (size_t i = 0; i < joint_arm_velocities.size(); ++i)
                                 ComputeFriction(joint_arm_velocities.data(), friction.data(), i);
@@ -463,8 +464,12 @@ bool Control::DoControl()
                         for (size_t i = 0; i < gripper_dof; ++i) {
                                 joint_gripper_state_torque[i].position = joint_gripper_positions[i];
                                 joint_gripper_state_torque[i].velocity = joint_gripper_velocities[i];
-                                joint_gripper_state_torque[i].effort   = friction[arm_dof + i]*0.3 ;
+                                joint_gripper_state_torque[i].effort   = friction[arm_dof + i]*0.3;
                         }
+
+                        // std::cout << "gripper_state_position: " << joint_gripper_state_torque[0].position << std::endl;
+                        // std::cout << "gripper_state_velocity: " << joint_gripper_state_torque[0].velocity << std::endl;
+                        // std::cout << "gripper_state_torque: " << joint_gripper_state_torque[0].effort << std::endl;
 
                         std::vector<MotorState> motor_arm_states = openarmjointconverter_->joint_to_motor(joint_arm_state_torque);
                         std::vector<MotorState> motor_gripper_states = openarmgripperjointconverter_->joint_to_motor(joint_gripper_state_torque);
@@ -486,7 +491,8 @@ bool Control::DoControl()
                         // send command to arm
                         openarm_->get_arm().mit_control_all(arm_cmds);
                         // send command to gripper
-                        openarm_->get_gripper().mit_control_all(gripper_cmds);
+                        // std::cout << "gripper_cmds[0]: " << gripper_cmds[0] << std::endl;
+                        // openarm_->get_gripper().mit_control_all(gripper_cmds);
 
                         std::this_thread::sleep_for(std::chrono::microseconds(200));
 
@@ -609,11 +615,13 @@ bool Control::DoControl()
         // }
 
 
-        bool Control::AdjustPosition(void)
+        bool Control::AdjustPosition(const double position_goal[])
         {
             int nstep = 220;
             double alpha;
         
+            std::cout << "AdjustPosition started" << std::endl;
+
             std::vector<MotorState> arm_motor_states;
             for (const auto& motor : openarm_->get_arm().get_motors()) {
                 arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), 0.0});
@@ -627,22 +635,22 @@ bool Control::DoControl()
             std::vector<JointState> joint_arm_now = openarmjointconverter_->motor_to_joint(arm_motor_states);
             std::vector<JointState> joint_hand_now = openarmgripperjointconverter_->motor_to_joint(gripper_motor_states);
         
-            std::vector<JointState> joint_arm_goal(NMOTORS-1);
-            for (size_t i = 0; i < NMOTORS-1; ++i) {
-                joint_arm_goal[i].position = INITIAL_POSITION[i];
+            std::vector<JointState> joint_arm_goal(NMOTORS);
+            for (size_t i = 0; i < NMOTORS; ++i) {
+                joint_arm_goal[i].position = position_goal[i];
                 joint_arm_goal[i].velocity = 0.0;
                 joint_arm_goal[i].effort = 0.0;
             }
         
-            std::vector<JointState> joint_hand_goal(joint_hand_now.size());
-            for (size_t i = 0; i < joint_hand_goal.size(); ++i) {
-                joint_hand_goal[i].position = 0.0;
-                joint_hand_goal[i].velocity = 0.0;
-                joint_hand_goal[i].effort = 0.0;
-            }
+        //     std::vector<JointState> joint_hand_goal(joint_hand_now.size());
+        //     for (size_t i = 0; i < joint_hand_goal.size(); ++i) {
+        //         joint_hand_goal[i].position = 0.0;
+        //         joint_hand_goal[i].velocity = 0.0;
+        //         joint_hand_goal[i].effort = 0.0;
+        //     }
         
-            std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0};
-            std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3};
+            std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 10.0};
+            std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3, 0.5};
 
             std::vector<double> kp_hand_temp = {10.0};
             std::vector<double> kd_hand_temp = {0.5};
@@ -650,20 +658,20 @@ bool Control::DoControl()
             for (int step = 0; step < nstep; ++step) {
                 alpha = static_cast<double>(step + 1) / nstep;
         
-                std::vector<JointState> joint_arm_interp(NMOTORS-1);
-                for (size_t i = 0; i < NMOTORS-1; ++i) {
+                std::vector<JointState> joint_arm_interp(NMOTORS);
+                for (size_t i = 0; i < NMOTORS; ++i) {
                     joint_arm_interp[i].position = joint_arm_goal[i].position * alpha + joint_arm_now[i].position * (1.0 - alpha);
                     joint_arm_interp[i].velocity = 0.0;
                 }
         
-                std::vector<JointState> joint_hand_interp(joint_hand_goal.size());
-                for (size_t i = 0; i < joint_hand_interp.size(); ++i) {
-                    joint_hand_interp[i].position = joint_hand_goal[i].position * alpha + joint_hand_now[i].position * (1.0 - alpha);
-                    joint_hand_interp[i].velocity = 0.0;
-                }
+                // std::vector<JointState> joint_hand_interp(joint_hand_goal.size());
+                // for (size_t i = 0; i < joint_hand_interp.size(); ++i) {
+                //     joint_hand_interp[i].position = joint_hand_goal[i].position * alpha + joint_hand_now[i].position * (1.0 - alpha);
+                //     joint_hand_interp[i].velocity = 0.0;
+                // }
         
                 std::vector<MotorState> arm_motor_refs = openarmjointconverter_->joint_to_motor(joint_arm_interp);
-                std::vector<MotorState> hand_motor_refs = openarmgripperjointconverter_->joint_to_motor(joint_hand_interp);
+                // std::vector<MotorState> hand_motor_refs = openarmgripperjointconverter_->joint_to_motor(joint_hand_interp);
         
                 std::vector<openarm::damiao_motor::MITParam> arm_cmds;
                 arm_cmds.reserve(arm_motor_refs.size());
@@ -677,20 +685,20 @@ bool Control::DoControl()
                     });
                 }
         
-                std::vector<openarm::damiao_motor::MITParam> hand_cmds;
-                hand_cmds.reserve(hand_motor_refs.size());
-                for (size_t i = 0; i < hand_motor_refs.size(); ++i) {
-                    hand_cmds.emplace_back(openarm::damiao_motor::MITParam{
-                        kp_hand_temp[i],
-                        kd_hand_temp[i],
-                        hand_motor_refs[i].position,
-                        hand_motor_refs[i].velocity,
-                        0.0
-                    });
-                }
+                // std::vector<openarm::damiao_motor::MITParam> hand_cmds;
+                // hand_cmds.reserve(hand_motor_refs.size());
+                // for (size_t i = 0; i < hand_motor_refs.size(); ++i) {
+                //     hand_cmds.emplace_back(openarm::damiao_motor::MITParam{
+                //         kp_hand_temp[i],
+                //         kd_hand_temp[i],
+                //         hand_motor_refs[i].position,
+                //         hand_motor_refs[i].velocity,
+                //         0.0
+                //     });
+                // }
         
                 openarm_->get_arm().mit_control_all(arm_cmds);
-                openarm_->get_gripper().mit_control_all(hand_cmds);
+                // openarm_->get_gripper().mit_control_all(hand_cmds);
         
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
@@ -713,6 +721,7 @@ bool Control::DoControl()
                 robot_state_->arm_state().set_all_references(joint_arm_final);
                 robot_state_->hand_state().set_all_references(joint_hand_final);
                 
+            std::cout << "AdjustPosition done" << std::endl;
             return true;
         }
         

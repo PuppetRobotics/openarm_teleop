@@ -405,10 +405,10 @@ int main(int argc, char** argv) {
                                        follower_Fc, follower_k, follower_Fv, follower_Fo);
 
         //set home postion
-        std::thread thread_l(&Control::AdjustPosition, control_leader);
-        std::thread thread_f(&Control::AdjustPosition, control_follower);
-        thread_l.join();
-        thread_f.join();
+        // std::thread thread_l(&Control::AdjustPosition, control_leader);
+        // std::thread thread_f(&Control::AdjustPosition, control_follower);
+        // thread_l.join();
+        // thread_f.join();
 
         // Start control process
         LeaderArmThread leader_thread(leader_state ,control_leader, FREQUENCY);
