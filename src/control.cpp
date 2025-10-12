@@ -529,8 +529,8 @@ bool Control::DoControl()
                         std::vector<MotorState> arm_motor_refs = openarmjointconverter_->joint_to_motor(joint_arm_states_ref);
                         std::vector<MotorState> hand_motor_refs = openarmgripperjointconverter_->joint_to_motor(joint_hand_states_ref);
                     
-                        std::vector<double> kp_arm_temp = {380.0, 360.0, 350.0, 350.0, 60.0, 60.0, 60.0};
-                        std::vector<double> kd_arm_temp = {4.0, 4.0, 4.0, 4.0, 1.5, 1.5, 1.5};
+                        std::vector<double> kp_arm_temp = {380.0, 360.0, 350.0, 350.0, 60.0, 60.0, 60.0, 10.0};
+                        std::vector<double> kd_arm_temp = {4.0, 4.0, 4.0, 4.0, 1.5, 1.5, 1.5, 0.5};
 
                         std::vector<double> kp_hand_temp = {10.0};
                         std::vector<double> kd_hand_temp = {0.5};
@@ -560,7 +560,7 @@ bool Control::DoControl()
                             }
 
                         openarm_->get_arm().mit_control_all(arm_cmds);
-                        openarm_->get_gripper().mit_control_all(hand_cmds);
+                        // openarm_->get_gripper().mit_control_all(hand_cmds);
 
                         std::this_thread::sleep_for(std::chrono::microseconds(200));
 
