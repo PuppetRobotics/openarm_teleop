@@ -529,8 +529,11 @@ bool Control::DoControl()
                         std::vector<MotorState> arm_motor_refs = openarmjointconverter_->joint_to_motor(joint_arm_states_ref);
                         std::vector<MotorState> hand_motor_refs = openarmgripperjointconverter_->joint_to_motor(joint_hand_states_ref);
                     
-                        std::vector<double> kp_arm_temp = {380.0, 360.0, 350.0, 350.0, 60.0, 60.0, 60.0, 10.0};
-                        std::vector<double> kd_arm_temp = {4.0, 4.0, 4.0, 4.0, 1.5, 1.5, 1.5, 0.5};
+
+                        // std::vector<double> kp_arm_temp = {380.0, 360.0, 350.0, 350.0, 60.0, 60.0, 60.0, 10.0};
+                        // std::vector<double> kd_arm_temp = {4.0, 4.0, 4.0, 4.0, 1.5, 1.5, 1.5, 0.5};
+                        std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 10.0};
+                        std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3, 0.5};
 
                         std::vector<double> kp_hand_temp = {10.0};
                         std::vector<double> kd_hand_temp = {0.5};
