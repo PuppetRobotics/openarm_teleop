@@ -102,7 +102,8 @@ class Control
                 const std::vector<double>& Fo);
 
         bool AdjustPosition(const double position_goal[]);
-
+        void ReadPosition();
+        
         // Compute torque based on bilateral
         bool DoControl();
         bool DoControl_u();

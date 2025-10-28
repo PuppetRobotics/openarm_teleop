@@ -355,6 +355,19 @@ bool Control::DoControl()
         }
 
 
+        void Control::ReadPosition(){
+                // get motor status
+                std::vector<MotorState> arm_motor_states;
+                for (const auto& motor : openarm_->get_arm().get_motors()) {
+                        arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), 0.0});
+                }
+
+                // convert joint to motor
+                std::vector<JointState> joint_arm_states = openarmjointconverter_->motor_to_joint(arm_motor_states); 
+               
+                robot_state_->arm_state().set_all_responses(joint_arm_states);
+        }
+
         bool Control::DoControl_u(){
 
                 // get motor status
