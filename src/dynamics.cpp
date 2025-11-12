@@ -86,7 +86,7 @@ void Dynamics::GetGravity(const double *motor_position, double *gravity)
         }
 }
 
-void Dynamics::GetColiori(const double *motor_position, const double *motor_velocity, double *colioli) {
+void Dynamics::GetCoriolis(const double *motor_position, const double *motor_velocity, double *colioli) {
         KDL::JntArray q_(kdl_chain.getNrOfJoints());
         KDL::JntArray q_dot(kdl_chain.getNrOfJoints());
 

@@ -166,11 +166,9 @@ bool Control::DoControl()
             joint_arm_positions_ref[i] = joint_arm_states_ref[i].position;
         }
         
-
-
         if (role_ == ROLE_LEADER) {
                 dynamics_l_->GetGravity(joint_arm_positions.data(), gravity.data());
-                dynamics_l_->GetColiori(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
+                dynamics_l_->GetCoriolis(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
 
                 dynamics_l_->GetMassMatrixDiagonal(joint_arm_positions.data(), inertia_diag_l.data());
                 dynamics_f_->GetMassMatrixDiagonal(joint_arm_positions_ref.data(), inertia_diag_f.data());
@@ -180,7 +178,7 @@ bool Control::DoControl()
 
         } else if (role_ == ROLE_FOLLOWER) {
                 dynamics_f_->GetGravity(joint_arm_positions.data(),  gravity.data());
-                dynamics_f_->GetColiori(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
+                dynamics_f_->GetCoriolis(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
 
                 dynamics_l_->GetMassMatrixDiagonal(joint_arm_positions.data(), inertia_diag_l.data());
                 dynamics_f_->GetMassMatrixDiagonal(joint_arm_positions_ref.data(), inertia_diag_f.data());
@@ -359,7 +357,7 @@ bool Control::DoControl()
                 // get motor status
                 std::vector<MotorState> arm_motor_states;
                 for (const auto& motor : openarm_->get_arm().get_motors()) {
-                        arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), 0.0});
+                        arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), motor.get_torque()});
                 }
 
                 // convert joint to motor
@@ -373,8 +371,9 @@ bool Control::DoControl()
                 // get motor status
                 std::vector<MotorState> arm_motor_states;
                 for (const auto& motor : openarm_->get_arm().get_motors()) {
-                        arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), 0.0});
+                        arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), motor.get_torque()});
                 }
+
 
                 std::vector<MotorState> gripper_motor_states;
                 for (const auto& motor : openarm_->get_gripper().get_motors()) {
@@ -418,7 +417,6 @@ bool Control::DoControl()
                 robot_state_->hand_state().set_all_responses(joint_gripper_states);
 
 
-
                 size_t arm_dof = robot_state_->arm_state().get_size();
                 size_t gripper_dof = robot_state_->hand_state().get_size();
 
@@ -452,7 +450,7 @@ bool Control::DoControl()
 
                         // calc dynamics
                         dynamics_l_->GetGravity(joint_arm_positions.data(), gravity.data());
-                        dynamics_l_->GetColiori(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
+                        dynamics_l_->GetCoriolis(joint_arm_positions.data(), joint_arm_velocities.data(), colioli.data());
                         dynamics_l_->GetMassMatrixDiagonal(joint_arm_positions.data(), inertia_diag.data());
 
 
@@ -794,3 +792,127 @@ bool Control::DoControl()
                 file.close();
         }
 
+
+        bool Control::DoControl_b() {
+                // get motor status
+                std::vector<MotorState> arm_motor_states;
+                const auto& arm_motors = openarm_->get_arm().get_motors();
+                for (size_t i = 0; i < arm_motors.size(); ++i) {
+                    const auto& motor = arm_motors[i];
+                    arm_motor_states.push_back({motor.get_position(), motor.get_velocity(), 0});
+                }
+            
+                // std::vector<MotorState> gripper_motor_states;
+                // const auto& gripper_motors = openarm_->get_gripper().get_motors();
+                // for (size_t i = 0; i < gripper_motors.size(); ++i) {
+                //     const auto& motor = gripper_motors[i];
+                //     gripper_motor_states.push_back({motor.get_position(), motor.get_velocity(), 0});
+                // }
+            
+                // convert joint to motor
+                std::vector<JointState> joint_arm_states =
+                    openarmjointconverter_->motor_to_joint(arm_motor_states);
+                // std::vector<JointState> joint_gripper_states =
+                //     openarmgripperjointconverter_->motor_to_joint(gripper_motor_states);
+            
+                // set reponse
+                robot_state_->arm_state().set_all_responses(joint_arm_states);
+                // robot_state_->hand_state().set_all_responses(joint_gripper_states);
+            
+                size_t arm_dof = robot_state_->arm_state().get_size();
+                // size_t gripper_dof = 0;
+            
+                std::vector<double> joint_arm_positions(arm_dof, 0.0);
+                std::vector<double> joint_arm_velocities(arm_dof, 0.0);
+                std::vector<double> joint_arm_efforts(arm_dof, 0.0);
+            
+                // std::vector<double> joint_gripper_positions(gripper_dof, 0.0);
+                // std::vector<double> joint_gripper_velocities(gripper_dof, 0.0);
+                // std::vector<double> joint_gripper_efforts(gripper_dof, 0.0);
+            
+                for (size_t i = 0; i < arm_dof; ++i) {
+                    joint_arm_positions[i] = joint_arm_states[i].position;
+                    joint_arm_velocities[i] = joint_arm_states[i].velocity;
+                }
+            
+                // for (size_t i = 0; i < gripper_dof; ++i) {
+                //     joint_gripper_positions[i] = joint_gripper_states[i].position;
+                //     joint_gripper_velocities[i] = joint_gripper_states[i].velocity;
+                // }
+            
+                std::vector<double> gravity(arm_dof, 0.0);
+                std::vector<double> coriolis(arm_dof, 0.0);
+                std::vector<double> friction(arm_dof, 0.0);
+                // std::vector<double> friction(arm_dof + gripper_dof, 0.0);
+            
+                std::vector<JointState> joint_arm_states_ref = robot_state_->arm_state().get_all_references();
+                // std::vector<JointState> joint_gripper_states_ref =
+                //     robot_state_->hand_state().get_all_references();
+            
+                std::vector<double> joint_arm_positions_ref(arm_dof);
+            
+                for (size_t i = 0; i < arm_dof; ++i) {
+                    joint_arm_positions_ref[i] = joint_arm_states_ref[i].position;
+                }
+            
+                if (role_ == ROLE_LEADER) {
+                    dynamics_l_->GetGravity(joint_arm_positions.data(), gravity.data());
+                    dynamics_l_->GetCoriolis(joint_arm_positions.data(), joint_arm_velocities.data(),
+                                             coriolis.data());
+            
+                } else if (role_ == ROLE_FOLLOWER) {
+                    dynamics_f_->GetGravity(joint_arm_positions.data(), gravity.data());
+                    dynamics_f_->GetCoriolis(joint_arm_positions.data(), joint_arm_velocities.data(),
+                                             coriolis.data());
+                }
+            
+                // Friction (compute joint friction)
+                for (size_t i = 0; i < joint_arm_velocities.size(); ++i)
+                    ComputeFriction(joint_arm_velocities.data(), friction.data(), i);
+                // for (size_t i = 0; i < joint_gripper_velocities.size(); ++i)
+                //     ComputeFriction(joint_gripper_velocities.data(), friction.data(),
+                //                     joint_arm_velocities.size() + i);
+            
+                // set gravity and friction comp joint torque value
+                for (size_t i = 0; i < arm_dof; i++) {
+                    joint_arm_states_ref[i].effort = gravity[i] + friction[i];
+                }
+            
+                // for (size_t i = 0; i < gripper_dof; i++) {
+                //     joint_gripper_states_ref[i].effort = friction[i + arm_dof];
+                // }
+            
+                std::vector<MotorState> motor_arm_states =
+                    openarmjointconverter_->joint_to_motor(joint_arm_states_ref);
+                // std::vector<MotorState> motor_gripper_states =
+                //     openarmgripperjointconverter_->joint_to_motor(joint_gripper_states_ref);
+            
+                // kp kd q dq tau
+                std::vector<openarm::damiao_motor::MITParam> arm_cmds;
+                arm_cmds.reserve(arm_dof);
+                for (size_t i = 0; i < arm_dof; ++i) {
+                    arm_cmds.emplace_back(openarm::damiao_motor::MITParam{
+                        Kp_[i], Kd_[i], motor_arm_states[i].position, motor_arm_states[i].velocity,
+                        motor_arm_states[i].effort});
+                }
+            
+                // // gripper command mit param
+                // std::vector<openarm::damiao_motor::MITParam> gripper_cmds;
+                // gripper_cmds.reserve(gripper_dof);
+                // for (size_t i = 0; i < gripper_dof; ++i) {
+                //     gripper_cmds.emplace_back(openarm::damiao_motor::MITParam{
+                //         Kp_[i + arm_dof], Kd_[i + arm_dof], motor_gripper_states[i].position,
+                //         motor_gripper_states[i].velocity, motor_gripper_states[i].effort});
+                // }
+            
+                // send command to arm
+                openarm_->get_arm().mit_control_all(arm_cmds);
+                // send command to gripper
+                // openarm_->get_gripper().mit_control_all(gripper_cmds);
+            
+                std::this_thread::sleep_for(std::chrono::microseconds(200));
+            
+                openarm_->recv_all(220);
+            
+                return true;
+            }

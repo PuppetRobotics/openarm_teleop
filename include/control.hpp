@@ -104,6 +104,9 @@ class Control
         bool AdjustPosition(const double position_goal[]);
         void ReadPosition();
         
+
+        bool DoControl_b();
+
         // Compute torque based on bilateral
         bool DoControl();
         bool DoControl_u();

@@ -57,7 +57,7 @@ class Dynamics
                 
                 bool Init();
                 void GetGravity(const double *motor_position, double *gravity);
-                void GetColiori(const double *motor_position, const double *motor_velocity, double *colioli);
+                void GetCoriolis(const double *motor_position, const double *motor_velocity, double *colioli);
                 void GetMassMatrixDiagonal(const double *motor_position, double *inertia_diag);
 
                 void GetJacobian(const double *motor_position, Eigen::MatrixXd &jacobian);
