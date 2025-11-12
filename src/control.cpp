@@ -605,30 +605,6 @@ bool Control::DoControl()
             }
         }
 
-        // void Control::ComputeFriction(const double *velocity, double *friction)
-        // {
-        //         if (TANHFRIC) {
-        //                 // tanh friction model
-        //                 double amp_tmp = 1.00;
-        //                 // To make the region near the static friction smoother
-        //                 double coef_tmp = 0.1;
-        //                 for (int i = 0; i < NJOINTS; i++) {
-        //                         const double v = velocity[i];
-        //                         const double Fc = Fc_[i];
-        //                         const double k = k_[i];
-        //                         const double Fv = Fv_[i];
-        //                         const double Fo = Fo_[i];
-        //                         friction[i] = amp_tmp * Fc * std::tanh(coef_tmp * k * v) + Fv * v + Fo;
-        //                 }
-        //         } else {
-        //                 // linear friction model
-        //                 for (int i = 0; i < NJOINTS; i++) {
-        //                         friction[i] = velocity[i] * Dn_[i];
-        //                 }
-        //         }
-        // }
-
-
         bool Control::AdjustPosition(const double position_goal[])
         {
             int nstep = 220;
@@ -888,11 +864,13 @@ bool Control::DoControl()
                 //     openarmgripperjointconverter_->joint_to_motor(joint_gripper_states_ref);
             
                 // kp kd q dq tau
+                std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 10.0};
+                std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3, 0.5};
                 std::vector<openarm::damiao_motor::MITParam> arm_cmds;
                 arm_cmds.reserve(arm_dof);
                 for (size_t i = 0; i < arm_dof; ++i) {
                     arm_cmds.emplace_back(openarm::damiao_motor::MITParam{
-                        Kp_[i], Kd_[i], motor_arm_states[i].position, motor_arm_states[i].velocity,
+                        kp_arm_temp[i], kd_arm_temp[i], motor_arm_states[i].position, motor_arm_states[i].velocity,
                         motor_arm_states[i].effort});
                 }
             
