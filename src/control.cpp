@@ -541,13 +541,8 @@ bool Control::DoControl()
                         std::vector<MotorState> hand_motor_refs = openarmgripperjointconverter_->joint_to_motor(joint_hand_states_ref);
                     
 
-                        // std::vector<double> kp_arm_temp = {380.0, 360.0, 350.0, 350.0, 60.0, 60.0, 60.0, 10.0};
-                        // std::vector<double> kd_arm_temp = {4.0, 4.0, 4.0, 4.0, 1.5, 1.5, 1.5, 0.5};
-                        std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 10.0};
-                        std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3, 0.5};
-
-                        std::vector<double> kp_hand_temp = {10.0};
-                        std::vector<double> kd_hand_temp = {0.5};
+                        const std::vector<double>& kp_arm_temp = Kp_;
+                        const std::vector<double>& kd_arm_temp = Kd_;
 
                         std::vector<openarm::damiao_motor::MITParam> arm_cmds;
                         arm_cmds.reserve(arm_motor_refs.size());
@@ -639,12 +634,9 @@ bool Control::DoControl()
         //         joint_hand_goal[i].effort = 0.0;
         //     }
         
-            std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 10.0};
-            std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3, 0.5};
+            const std::vector<double>& kp_arm_temp = Kp_;
+            const std::vector<double>& kd_arm_temp = Kd_;
 
-            std::vector<double> kp_hand_temp = {10.0};
-            std::vector<double> kd_hand_temp = {0.5};
-        
             for (int step = 0; step < nstep; ++step) {
                 alpha = static_cast<double>(step + 1) / nstep;
         
@@ -864,8 +856,8 @@ bool Control::DoControl()
                 //     openarmgripperjointconverter_->joint_to_motor(joint_gripper_states_ref);
             
                 // kp kd q dq tau
-                std::vector<double> kp_arm_temp = {50, 50.0, 50.0, 50.0, 10.0, 10.0, 10.0, 10.0};
-                std::vector<double> kd_arm_temp = {1.2, 1.2, 1.2, 1.2, 0.3, 0.2, 0.3, 0.5};
+                const std::vector<double>& kp_arm_temp = Kp_;
+                const std::vector<double>& kd_arm_temp = Kd_;
                 std::vector<openarm::damiao_motor::MITParam> arm_cmds;
                 arm_cmds.reserve(arm_dof);
                 for (size_t i = 0; i < arm_dof; ++i) {
