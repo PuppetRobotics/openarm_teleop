@@ -461,13 +461,19 @@ bool Control::DoControl()
                         for (size_t i = 0; i < joint_gripper_velocities.size(); ++i)
                                 ComputeFriction(joint_gripper_velocities.data(), friction.data(), joint_arm_velocities.size() + i);
 
+                        // Read per-joint feedforward torque from reference effort fields.
+                        // When force feedback is active, ForceFeedbackSupervisor sets these
+                        // via robot_state_->arm_state().set_all_references() before DoControl_u().
+                        // When force feedback is off, all values are 0.
+                        std::vector<JointState> joint_arm_states_ref = robot_state_->arm_state().get_all_references();
 
                         // arm joint state
                         std::vector<JointState> joint_arm_state_torque(arm_dof);
                         for (size_t i = 0; i < arm_dof; ++i) {
                                 joint_arm_state_torque[i].position = joint_arm_positions[i];
                                 joint_arm_state_torque[i].velocity = joint_arm_velocities[i];
-                                joint_arm_state_torque[i].effort   = gravity[i] + friction[i]*0.3 + colioli[i]*0.1;
+                                const double tau_ff = (i < joint_arm_states_ref.size()) ? joint_arm_states_ref[i].effort : 0.0;
+                                joint_arm_state_torque[i].effort   = gravity[i] + friction[i]*0.3 + colioli[i]*0.1 + tau_ff;
                         }
 
                         // gripper joint state
