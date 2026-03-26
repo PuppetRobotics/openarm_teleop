@@ -562,17 +562,17 @@ bool Control::DoControl()
                                 });
                             }
                     
-                        std::vector<openarm::damiao_motor::MITParam> hand_cmds;
-                        hand_cmds.reserve(hand_motor_refs.size());
-                        for (size_t i = 0; i < hand_motor_refs.size(); ++i) {
-                                hand_cmds.emplace_back(openarm::damiao_motor::MITParam{
-                                    kp_hand_temp[i],
-                                    kd_hand_temp[i],
-                                    hand_motor_refs[i].position,
-                                    hand_motor_refs[i].velocity,
-                                    0.0
-                                });
-                            }
+                        // std::vector<openarm::damiao_motor::MITParam> hand_cmds;
+                        // hand_cmds.reserve(hand_motor_refs.size());
+                        // for (size_t i = 0; i < hand_motor_refs.size(); ++i) {
+                        //         hand_cmds.emplace_back(openarm::damiao_motor::MITParam{
+                        //             kp_hand_temp[i],
+                        //             kd_hand_temp[i],
+                        //             hand_motor_refs[i].position,
+                        //             hand_motor_refs[i].velocity,
+                        //             0.0
+                        //         });
+                        //     }
 
                         openarm_->get_arm().mit_control_all(arm_cmds);
                         // openarm_->get_gripper().mit_control_all(hand_cmds);
