@@ -56,6 +56,7 @@ class Dynamics
                 ~Dynamics();
                 
                 bool Init();
+                size_t GetChainDOF() const { return kdl_chain.getNrOfJoints(); }
                 void GetGravity(const double *motor_position, double *gravity);
                 void GetCoriolis(const double *motor_position, const double *motor_velocity, double *colioli);
                 void GetMassMatrixDiagonal(const double *motor_position, double *inertia_diag);
