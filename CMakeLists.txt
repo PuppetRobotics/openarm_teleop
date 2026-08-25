@@ -58,6 +58,7 @@ target_include_directories(openarm_teleop_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${EIGEN3_INCLUDE_DIRS}
+    ${urdfdom_INCLUDE_DIRS}  # Ensures /usr/include/urdfdom is explicitly added to the header paths
 )
 
 target_link_libraries(openarm_teleop_lib PUBLIC
@@ -65,7 +66,7 @@ target_link_libraries(openarm_teleop_lib PUBLIC
     ${EIGEN3_LIBRARIES}
     ${orocos_kdl_LIBRARIES}
     kdl_parser::kdl_parser
-    urdfdom_model
+    ${urdfdom_LIBRARIES}     # Reverted from target namespace to verified package variables
     yaml-cpp
 )
 
@@ -127,4 +128,4 @@ install(FILES
 install(EXPORT openarm_teleopTargets
     NAMESPACE openarm_teleop::
     DESTINATION ${INSTALL_CONFIGDIR}
-)
+) 
