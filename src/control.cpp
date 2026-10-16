@@ -558,10 +558,14 @@ bool Control::DoControl()
                                     kd_arm_temp[i],
                                     arm_motor_refs[i].position,
                                     arm_motor_refs[i].velocity,
-                                    0.0
+                                    // Feedforward torque from the reference effort. The caller
+                                    // owns this field: it must be zero unless the caller set a
+                                    // feedforward on purpose (it is not a pass-through of the
+                                    // leader's measured effort).
+                                    arm_motor_refs[i].effort
                                 });
                             }
-                    
+
                         // std::vector<openarm::damiao_motor::MITParam> hand_cmds;
                         // hand_cmds.reserve(hand_motor_refs.size());
                         // for (size_t i = 0; i < hand_motor_refs.size(); ++i) {
